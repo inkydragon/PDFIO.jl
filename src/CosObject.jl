@@ -23,6 +23,8 @@ to use the `Cos` layer or not. Below is the object hierarchy.
 CosObject                           Abstract
     CosNull                         Value (CosNullType)
 CosString                           Abstract
+    CosXString                      Concrete
+    CosLiteralString                Concrete
 CosName                             Concrete
 CosNumeric                          Abstract
     CosInt                          Concrete
@@ -30,10 +32,13 @@ CosNumeric                          Abstract
 CosBoolean                          Concrete
     CosTrue                         Value (CosBoolean)
     CosFalse                        Value (CosBoolean)
-CosDict                             Concrete
-CosArray                            Concrete
-CosStream                           Concrete (always wrapped as an indirect object)
+CosDict                             Concrete, mutable
+CosArray                            Concrete, mutable
+CosStream                           Concrete, mutable (always wrapped as an indirect object)
+CosObjectStream                     Concrete, mutable
+CosIndirectObject                   Concrete, mutable
 CosIndirectObjectRef                Concrete (only useful when CosDoc is available)
+CosComment                          Concrete
 ```
 
 *Note*: As a reader API you may not need to instantiate any of `CosObject` types.
