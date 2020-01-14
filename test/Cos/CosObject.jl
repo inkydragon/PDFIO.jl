@@ -4,21 +4,6 @@ using PDFIO.Cos: CosNullType, CosIndirectObject, CosObjectStream, CosComment
 # CosString
 using PDFIO.Cos: CosXString, CosLiteralString
 
-# All CosObject
-# julia> println.("  ", subtypes(CosObject));
-#   CosArray
-#   CosBoolean
-#   CosDict
-#   CosIndirectObjectRef
-#   CosName
-#   CosNumeric
-#   CosStream
-#   CosString
-#   PDFIO.Cos.CosComment
-#   PDFIO.Cos.CosIndirectObject
-#   PDFIO.Cos.CosNullType
-#   PDFIO.Cos.CosObjectStream
-
 @testset "CosObject" begin
 
 begin
@@ -55,6 +40,8 @@ end
         # test_get_val(CosBoolean, [true, false])
         @test CosTrue.val  == true  # CosBoolean(true)
         @test CosFalse.val == false # CosBoolean(false)
+        @test "$CosTrue"   == "true"
+        @test "$CosFalse"  == "false"
     end # end CosBoolean test
 
     @testset "CosNumeric" begin
@@ -62,21 +49,31 @@ end
         # test_get_val(CosFloat, rand(Float32, 10))
         _float32 = rand(Float32)
         @test CosFloat(_float32) |> get == _float32
+        @test "$(CosFloat(_float32))" == "$_float32"
 
         # CosInt
         #   val::Int
         # test_get_val(CosInt, rand(Int64, 10))
         _int64 = rand(Int64)
         @test CosInt(_int64) |> get == _int64
+        @test "$(CosInt(_int64))" == "$_int64"
     end # end CosNumeric test
 
     @testset "CosIndirectObject" begin
         # num::Int, gen::Int, obj::CosObject
-        _obj_tup = (num=0, gen=1, obj=CosInt(0))
+        _obj_tup = (num=11, gen=22, obj=CosInt(33))
         _ind_obj = CosIndirectObject(_obj_tup...)
         @test _ind_obj.num == _obj_tup.num
         @test _ind_obj.gen == _obj_tup.gen
         @test _ind_obj.obj == _obj_tup.obj
+        @test "$_ind_obj" ==
+            """
+            
+            $(_obj_tup.num) $(_obj_tup.gen) obj
+            $(_obj_tup.obj)
+            endobj
+            
+            """
 
         # get(o::CosIndirectObject) = get(o.obj)
         @test _ind_obj |> get == _obj_tup.obj |> get
@@ -87,13 +84,17 @@ end
         # CosIndirectObjectRef(num::Int, gen::Int)=new((num, gen))
         _tup_int64 = rand(Int, 2) |> Tuple
         @test CosIndirectObjectRef(_tup_int64...) |> get == _tup_int64
+        @test "$(CosIndirectObjectRef(_tup_int64...))" == 
+            join([_tup_int64..., "R"], " ")
 
         # CosIndirectObjectRef(obj::CosIndirectObject) =
         #   CosIndirectObjectRef(obj.num, obj.gen)
-        _obj_tup = (num=0, gen=1, obj=CosInt(0))
+        _obj_tup = (num=1, gen=2, obj=CosInt(3))
         _ind_obj = CosIndirectObject(_obj_tup...)
         _ind_obj_ref = CosIndirectObjectRef(_ind_obj)
         @test _ind_obj_ref |> get == (_ind_obj.num, _ind_obj.gen)
+        @test "$_ind_obj_ref" == 
+            join([_obj_tup.num, _obj_tup.gen, "R"], " ")
     end # end CosIndirectObjectRef test
 
     @testset "CosName" begin
@@ -104,11 +105,13 @@ end
         # test_get_val(CosName, ["rand_symbol", "*", "c++"])
         _str = "rand_symbol"
         @test CosName(_str) |> get == cosname(_str)
+        @test "$(CosName(_str))" == "/$_str"
     end # end CosName test
 
     @testset "@cn_str" begin
         # @cn_str(str) -> CosName
         @test cn"Name" |> get == CosName("Name") |> get
+        @test "$(cn"Name")" == "/Name"
     end # end @cn_str test
 
     @testset "CosString" begin
@@ -169,9 +172,17 @@ end
 
     @testset "CosComment" begin
         # val::String
+        _str = "Some random comment ++"
+        @test CosComment(_str) |> get == _str
+        @test "$(CosComment(_str))" == "%$_str"
         # CosComment(barr::Vector{UInt8}) = CosComment(String(Char.(barr)))
-
+        
         # show(io::IO, os::CosComment) = print(io, '%', os.val)
 
     end # end CosComment test
+    
+    @testset "Show(CosObject)" begin
+        _null = CosNull
+        @test "$_null" == "null"
+    end # end Show(CosObject) test
 end # end CosObject test
